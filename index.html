@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <h1>Websockets- <small>status</small></h1>
+    <form>
+        <input type="text" placeholder="Enviar mensaje">
+        <button>Enviar</button>
+    </form>
+    <ul id="messages">
+
+    </ul>
+    <script>
+        let socket=null;
+        const form = document.querySelector('form');
+        const input = document.querySelector('input');
+        const messagesElem = document.querySelector('#messages');
+        const statusElemen=document.querySelector('small');
+
+
+        function sendMessage(message) {
+                
+            socket?.send(message); //enviamos el mensaje al web socket server mediante el socket
+        }
+
+        function renderMessage(message) {
+            const li = document.createElement('li'); //va añadiendo mensajes a la lista
+            li.innerHTML = message;
+            messagesElem.prepend(li);
+        }
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const message = input.value;
+            sendMessage(message);
+        });
+
+
+        function connectToServer() {
+            socket = new WebSocket('ws://localhost:3000');
+                  
+            
+            socket.onopen = () => {
+                statusElemen.innerText="Online";
+               
+            }
+            
+            socket.onclose = () => {
+                statusElemen.innerText="Offline";
+                <!-- console.log("Disconnected") -->
+                setTimeout(() => {
+                    connectToServer();
+                }, 1500);  //cada 1.5 segundos se intentará reconectar al servidor, esto si el server se cae
+                //se recomienda en produccion, multiplicar el tiempo de reconexión por numeros aleatorios, para que no suceda que  todos los clientes se intenten reconectar al mismo  tiempo
+            }
+            socket.onmessage = (event) => {
+                const { payload } = JSON.parse(event.data)
+                this.renderMessage(payload);
+            }
+        }
+
+
+
+        connectToServer(); //llamamos a la función para conectarnos al servidor
+    </script>
+</body>
+
+</html>
